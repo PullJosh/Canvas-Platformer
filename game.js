@@ -291,7 +291,7 @@ var game = {
 				player.y += Math.abs(y);
 				camY += Math.abs(y) * gridSize;
 			}
-			if(y > map.grid.length) {
+			if(y >= map.grid.length) {
 				var insert = [];
 				for(i = 0; i < map.grid[0].length; i++) {
 					insert[i] = 0;
@@ -368,14 +368,25 @@ var player = {
 			}
 
 			function solidAt(x, y) {
+				function blockIsSolid(intX, intY) {
+					// Just in case
+					intX = Math.round(intX);
+					intY = Math.round(intY);
+
+					if(intX < 0 || intX > map.grid[0].length || intY < 0 || intY > map.grid.length - 1) {
+						return false;
+					}
+					return game.getTileObj(map.grid[intY][intX]).solid;
+				}
+
 				// We assume that either the x or the y will be a whole number. Slightly dangerous...
 				if(x !== Math.round(x)) {
-					return game.getTileObj(map.grid[y][Math.floor(x)]).solid || game.getTileObj(map.grid[y][Math.ceil(x)]).solid;
+					return blockIsSolid(Math.floor(x), y) || blockIsSolid(Math.ceil(x), y);
 				}
 				if(y !== Math.round(y)) {
-					return game.getTileObj(map.grid[Math.floor(y)][x]).solid || game.getTileObj(map.grid[Math.ceil(y)][x]).solid;
+					return blockIsSolid(x, Math.floor(y)) || blockIsSolid(x, Math.ceil(y));
 				}
-				return map.grid[y][x] > 0;
+				return blockIsSolid(x, y);
 			}
 
 			if(keyPressed("right")) {
@@ -414,6 +425,19 @@ var player = {
 
 			camX += (player.x * gridSize - canvas.width / 2 - camX) * 0.25;
 			camY += (player.y * gridSize - canvas.height / 2 - camY) * 0.25;
+
+			if (player.x < -25 ||
+				player.y < -25 ||
+				player.x > map.grid[0].length + 25 ||
+				player.y > map.grid.length + 25) {
+
+				player.x = map.initialPos.x;
+				player.y = map.initialPos.y;
+				player.xVel = 0;
+				player.yVel = 0;
+				camX = player.x * gridSize - canvas.width / 2;
+				camY = player.y * gridSize - canvas.height / 2;
+			}
 		}
 	}
 
